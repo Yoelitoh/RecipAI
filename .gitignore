@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Configuración y credenciales
+.env
+.env.*
+!.env.example
+secrets.json
+
+# Resultados y datos descargados
+salida/
+*.log
+RecetasDeLaAbuela.csv
+
+# Archivos de Windows y editores
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

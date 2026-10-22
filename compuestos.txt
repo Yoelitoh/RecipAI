@@ -1,0 +1,22 @@
+# ingredientes de varias palabras que no deben reducirse a la primera
+aceite de oliva
+caldo de pollo
+caldo de res
+caldo de pescado
+caldo de verduras
+caldo de carne
+queso fresco
+leche condensada
+leche evaporada
+harina de maíz
+harina de trigo
+vinagre de manzana
+pechuga de pollo
+carne molida
+carne picada
+crema de leche
+polvo de hornear
+azúcar glass
+pasta de achiote
+polvo para hornear
+polvo de hornear
