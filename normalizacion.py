@@ -1,3 +1,4 @@
+import ast
 import csv
 import re
 import unicodedata
@@ -28,8 +29,18 @@ UNIDADES = {
     "palito", "palitos", "raja", "rajas", "filete", "filetes", "vaina",
     "vainas", "grano", "granos", "tira", "tiras", "porcion", "porciones",
     "cono", "conos", "bola", "bolas", "gajo", "gajos", "cuarto", "atado",
-    "tapa", "tapas",
+    "tapa", "tapas", "unidad", "unidades", "ud", "uds", "centimetro", "centimetros", "cm",
+    "pellizco", "pellizcos", "tarro", "tarros", "vasito", "vasitos", "trocito", "trocitos",
+    "cch", "cdita", "cditas", "cuch", "cuchs", "unid", "unids", "pza", "pzas", "chispa", "chispas",
+    "hebra", "hebras", "lamina", "laminas", "palo", "palos", "pastilla", "pastillas", "barrita",
+    "barritas", "ramillete", "ramilletes", "sobrecito", "sobrecitos", "terron", "terrones",
+    "medida", "medidas", "chorreon", "cta", "ctas", "copita", "copitas", "ramito", "ramitos", "und", "unds",
 }
+
+UNIDADES_DEBILES = {"filete", "filetes"}
+
+CUCHARAS = {"cucharada", "cucharadas", "cucharadita", "cucharaditas", "cda", "cdas", "cdta", "cdtas"}
+CALIFICADORES_CUCHARA = {"postre", "cafe", "sopera", "soperas", "rasa", "colmada", "grande", "pequena"}
 
 RELLENO = {
     "aprox", "aproximadamente", "alrededor", "cerca", "unos", "unas", "un",
@@ -37,7 +48,8 @@ RELLENO = {
     "nueve", "diez", "once", "doce", "docena", "media", "medio", "mitad",
     "de", "del", "la", "el", "los", "las", "y", "o", "al", "poco", "poca",
     "pocas", "pocos", "algunas", "algunos", "varias", "varios", "como",
-    "casi", "grande", "grandes", "mediano", "mediana", "medianos",
+    "casi", "gusto", "necesaria", "necesario", "cantidad", "suficiente", "suficientes",
+    "abundante", "grande", "grandes", "mediano", "mediana", "medianos",
     "medianas", "pequeno", "pequena", "pequenos", "pequenas", "chico",
     "chica", "chicos", "chicas", "extra", "bien", "buen", "buena",
 }
@@ -65,19 +77,22 @@ CORTE = {
 
 PREFIJOS_DE = {
     "jugo", "zumo", "ralladura", "cascara", "pulpa", "yema", "yemas", "clara",
-    "claras",
+    "claras", "corteza", "cortezas",
 }
 
-IGNORAR_PALABRA = {"pero", "aunque", "nota", "notas", "opcional", "opcionales", "ver", "si"}
+IGNORAR_PALABRA = {
+    "pero", "aunque", "nota", "notas", "opcional", "opcionales", "ver", "si", "gusto",
+    "necesario", "necesaria", "cantidad", "persona", "personas", "racion", "raciones", "etc",
+}
 
-SINGULARES_FIJOS = {"res", "anis", "cuscus", "mas", "gas", "tres", "pan"}
+SINGULARES_FIJOS = {"res", "anis", "cuscus", "mas", "gas", "tres", "pan", "hummus", "humus"}
 
 UTENSILIOS = {
     "cuchillo", "palillo", "palillos", "papel", "plastico", "olla", "sarten",
     "charola", "molde", "licuadora", "procesador", "aluminio", "servilleta",
     "toalla", "brocheta", "brochetas", "vidrio", "bandeja", "cacerola",
     "tazon", "recipiente", "comal", "batidora", "colador", "rosticero",
-    "cuchara", "tenedor", "horno", "tapa", "pinza", "pinzas", "espatula",
+    "cuchara", "tenedor", "horno", "tapa", "pinza", "pinzas", "espatula", "huevera",
 }
 
 BASICOS = {"sal", "pimienta", "agua", "aceite"}
@@ -122,17 +137,55 @@ SINONIMOS = _leer_csv_sinonimos()
 COMPUESTOS = _leer_compuestos()
 COMPUESTOS_CLAVE = [(clave(c), c) for c in COMPUESTOS]
 
+
+def _claves(conjunto):
+    return {clave(x) for x in conjunto}
+
+
+UNIDADES = _claves(UNIDADES)
+UNIDADES_FUERTES = UNIDADES - _claves(UNIDADES_DEBILES)
+CUCHARAS = _claves(CUCHARAS)
+CALIFICADORES_CUCHARA = _claves(CALIFICADORES_CUCHARA)
+RELLENO = _claves(RELLENO)
+CORTE = _claves(CORTE)
+UTENSILIOS = _claves(UTENSILIOS)
+PREFIJOS_DE = _claves(PREFIJOS_DE)
+IGNORAR_PALABRA = _claves(IGNORAR_PALABRA)
+
+MOJIBAKE = {
+    "Ã¡": "á", "Ã©": "é", "Ã­": "í", "Ã³": "ó", "Ãº": "ú", "Ã±": "ñ", "Ã¼": "ü",
+    "Â¿": "¿", "Â¡": "¡", "Âº": "º", "Âª": "ª", "Â½": "½", "Â¼": "¼", "Â¾": "¾", "Â": "",
+}
+
+
+def reparar_codificacion(texto):
+    if not isinstance(texto, str) or ("Ã" not in texto and "Â" not in texto):
+        return texto
+    for codec in ("cp1252", "latin-1"):
+        try:
+            return texto.encode(codec).decode("utf-8")
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            continue
+    for malo, bueno in MOJIBAKE.items():
+        texto = texto.replace(malo, bueno)
+    return texto
+
 def limpiar_texto(texto):
+    texto = reparar_codificacion(texto)
     texto = texto.replace("\u200b", "").replace("\xa0", " ")
+    texto = re.sub(r"[ðŸÿ]+[^\w\s]{0,2}", "", texto)
+    texto = re.sub(r"(?<=\d)(?=[A-Za-zñáéíóúÑÁÉÍÓÚ])", " ", texto)
     for patron, reemplazo in REPARACIONES:
         texto = patron.sub(reemplazo, texto)
     texto = re.sub(r"\([^)]*\)", " ", texto)
+    texto = re.sub(r"\bc\s*/\s*[nsNS]\b|\b[qQ]\.?\s?[bB]\.?(?=\s|$)", " ", texto)
     texto = re.sub(r"(?<=\d),(?=\d)", ".", texto)
     texto = texto.replace("*", " ").replace("/", " ")
-    return re.sub(r"\s+", " ", texto).strip()
+    texto = re.sub(r"\s+", " ", texto).strip()
+    return texto.strip("'\" ")
 
 
-def dividir_ingredientes(texto):
+def _dividir_comas(texto):
     texto = re.sub(r"(?<=\d),(?=\d)", ".", texto)
     partes, nivel, actual = [], 0, []
     for car in texto:
@@ -149,15 +202,38 @@ def dividir_ingredientes(texto):
     return [p.strip() for p in partes if p.strip()]
 
 
+def dividir_ingredientes(texto):
+    texto = str(texto or "").strip()
+    elementos = [texto]
+    if texto.startswith("["):
+        try:
+            valor = ast.literal_eval(texto)
+            if isinstance(valor, (list, tuple)):
+                elementos = [str(v) for v in valor]
+        except (ValueError, SyntaxError):
+            interior = texto.strip("[]")
+            elementos = [e.strip("'\" ") for e in re.split(r"['\"]\s*,\s*['\"]", interior)]
+    partes = []
+    for elemento in elementos:
+        partes.extend(_dividir_comas(elemento))
+    return partes
+
+
 def _token_limpio(token):
     return clave(token).strip(".,;:()\"'")
 
 
 def quitar_cantidad(tokens):
     tokens = list(tokens)
-    while tokens:
+    tras_cuchara = False
+    while len(tokens) > 1:
         t = _token_limpio(tokens[0])
-        if not t or RE_NUMERO.match(t) or t in UNIDADES or t in RELLENO:
+        if t in CUCHARAS:
+            tras_cuchara = True
+            tokens.pop(0)
+        elif not t or RE_NUMERO.match(t) or t in UNIDADES or t in RELLENO:
+            tokens.pop(0)
+        elif tras_cuchara and t in CALIFICADORES_CUCHARA:
             tokens.pop(0)
         else:
             break
@@ -225,7 +301,7 @@ def analizar_linea(linea):
         palabra = comp or _palabra_principal(grupo)
         if palabra is None or len(palabra) < 3:
             return "fallo", []
-        if clave(palabra) in UTENSILIOS or clave(palabra) in IGNORAR_PALABRA:
+        if clave(palabra) in UTENSILIOS or clave(palabra) in IGNORAR_PALABRA or clave(palabra) in UNIDADES_FUERTES:
             return "ignorar", []
         palabras.append(palabra)
     if not palabras:

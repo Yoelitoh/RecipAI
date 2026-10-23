@@ -9,38 +9,38 @@ from pathlib import Path
 
 import pandas as pd
 
-from normalizacion import BASICOS, analizar_linea, canonico, clave, dividir_ingredientes
+from normalizacion import BASICOS, analizar_linea, canonico, clave, dividir_ingredientes, reparar_codificacion
 
 CARPETA = Path(__file__).resolve().parent
 
 TIPOS = [
+    ("postre",
+     r"postre|dulce|flan|galleta|helado|gelatina|mousse|natilla|brownie|bizcocho|budin|pudin|merengue|cheesecake|bunuelo|capirotada|tres leches|arroz con leche|mermelada|compota|churro|rosca|torrija|gofre|panqueque|magdalena|cupcake|muffin|alfajor|trufa|caramelo|turron|cajeta|en tacha|crema catalana|crema pastelera|sorbete|ganache|marquise|pancake|tortitas|\\bteja|majarete|sirope|tiramisu|profiterol|polvoron|mantecado|coulant|fudge|bombon",
+     None),
     ("bebida",
-     r"ponche|licuado|batido|coctel|cocktail|bebida|limonada|smoothie|atole|chocolate caliente|rompope|sangria|horchata|refresco",
+     r"ponche|licuado|batido|coctel|cocktail|bebida|limonada|smoothie|atole|chocolate caliente|rompope|sangria|horchata|refresco|\bcafe\b|licor|caipirinha|frape|mojito|cerveza|zumo|\bte\b|infusion|colada|margarita|daiquiri",
      None),
     ("salsa",
      r"salsa|aderezo|vinagreta|guacamole|mojo|chimichurri|mayonesa|alioli|pesto|sofrito|encurtid|curtid|escabeche",
-     r"^(?:salsa|aderezo|vinagreta|guacamole|pico de gallo|mojo|chimichurri|mayonesa|alioli|pesto|sofrito)"),
-    ("postre",
-     r"postre|dulce|tarta|pastel|tartaleta|flan|galleta|helado|gelatina|mousse|natilla|brownie|bizcocho|budin|pudin|merengue|cheesecake|crepa|bunuelo|capirotada|tres leches|arroz con leche|mermelada|compota|churro|rosca|torrija|gofre|panqueque|magdalena|cupcake|muffin|alfajor|trufa|caramelo|turron|cajeta|en tacha",
-     None),
-    ("sopa", r"sopa|crema de|caldo|consome|pozole|gazpacho|cocido|menestra|puchero|sancocho|locro|potaje", None),
+     r"^(?:salsa|aderezo|vinagreta|guacamole|pico de gallo|mojo|chimichurri|mayonesa|alioli|pesto|sofrito|hummus|humus|pate|chutney|mermelada de (?:cebolla|tomate|pimiento))"),
+    ("sopa", r"sopa|crema de|caldo|consome|pozole|gazpacho|salmorejo|ajoblanco|vichyssoise|cocido|menestra|puchero|sancocho|locro|potaje", None),
     ("ensalada", r"ensalada", None),
     ("pasta", r"pasta|espagueti|spaghetti|macarron|fideo|lasana|tallarin|canelon|raviol|noqui|fusilli|penne|coditos", None),
     ("arroz", r"arroz|paella|risotto|risoto", None),
     ("pescado y marisco",
-     r"pescado|marisco|camaron|atun|salmon|bacalao|pulpo|calamar|merluza|tilapia|ceviche|gamba|mejillon|almeja|jaiba|langostino|trucha|sardina|dorada|lubina|robalo|corvina|huachinango|mojarra|pargo|cangrejo",
+     r"pescado|marisco|camaron|atun|salmon|bacalao|pulpo|calamar|merluza|tilapia|ceviche|gamba|mejillon|almeja|jaiba|langostino|trucha|sardina|dorada|lubina|robalo|corvina|huachinango|mojarra|pargo|cangrejo|bonito|bogavante|besugo|\\brape\\b|boqueron|anchoa|sushi|maki|nigiri|nigeri|\\bpacu|vieira|necora|sepia|chipiron|lenguado|rodaballo|gambas|percebe|zamburina|anguila",
      None),
     ("tacos y antojitos",
-     r"taco|quesadilla|tamal|empanada|tostada|enchilada|burrito|nacho|taquito|gordita|sope|tlayuda|arepa|pupusa|fajita|chilaquil|totopo|flauta|huarache",
+     r"taco|quesadilla|tamal|empanada|tostada|enchilada|burrito|nacho|taquito|gordita|sope|tlayuda|arepa|pupusa|fajita|chilaquil|totopo|flauta|huarache|falafel|pakora|croqueta|samosa|rollito",
      None),
     ("carne",
-     r"carne|cerdo|puerco|pollo|pavo|\bres\b|ternera|cordero|chorizo|jamon|costilla|albondiga|bistec|pierna|lomo|chuleta|cochinita|barbacoa|milanesa|hamburguesa|salchicha|tocino|pernil",
+     r"carne|cerdo|puerco|pollo|pavo|\bres\b|ternera|cordero|chorizo|jamon|costilla|albondiga|bistec|bife|pierna|lomo|chuleta|cochinita|barbacoa|milanesa|hamburguesa|salchicha|tocino|pernil|filete|medallon|solomillo|entrecot|higado|butifarra|cochinillo|conejo|cabrito|morcilla|callos|gulash|goulash|rabo de|lengua|codorniz|pato|oso buco|asado|rosbif|kebab",
      None),
-    ("huevos", r"huevo|omelette|revuelto", None),
+    ("huevos", r"huevo|omelette|revuelto|quiche|tortilla", None),
     ("verdura",
-     r"verdura|vegetal|hortaliza|legumbre|frijol|lenteja|garbanzo|champinon|hongo|nopal|calabaza|calabacita|berenjena|espinaca|brocoli|coliflor|chayote|papa\b|papas|patata|camote|yuca",
+     r"ratatouille|alcachofa|menestra|pisto|esparrago|judias verdes|setas|verdura|vegetal|hortaliza|legumbre|frijol|lenteja|garbanzo|champinon|hongo|nopal|calabaza|calabacita|berenjena|espinaca|brocoli|coliflor|chayote|papa\b|papas|patata|camote|yuca",
      None),
-    ("pan y masa", r"\bpan\b|masa|pizza|focaccia|brioche|bollo", None),
+    ("pan y masa", r"\bpan\b|masa|pizza|focaccia|brioche|bollo|sandwich|bocadillo|bocata|canape|tosta|bagel|\btorta\b", None),
 ]
 TIPOS_COMPILADOS = [
     (tipo, re.compile(pat_cat), re.compile(pat_nom if pat_nom else pat_cat))
@@ -48,15 +48,72 @@ TIPOS_COMPILADOS = [
 ]
 
 
-def asignar_tipo(categoria, nombre):
+PESCADOS = {
+    "atun", "salmon", "bacalao", "merluza", "gamba", "langostino", "bonito", "besugo", "lubina", "dorada",
+    "pulpo", "calamar", "mejillon", "vieira", "bogavante", "sardina", "anchoa", "trucha", "rape", "nécora",
+    "necora", "almeja", "cangrejo", "sepia", "lenguado", "rodaballo", "surimi", "boqueron", "pescado", "marisco",
+    "camaron", "jaiba", "tilapia", "caballa", "pacu",
+}
+CARNES = {
+    "pollo", "ternera", "cerdo", "cordero", "butifarra", "higado", "conejo", "pavo", "lomo", "costilla",
+    "carne", "solomillo", "chuleta", "cochinillo", "morcilla", "pato", "salchicha", "hamburguesa", "bistec",
+    "bife", "pechuga", "muslo", "cabrito", "codorniz", "entrecot", "rabo", "tocino", "panceta",
+}
+DULCES = {"azucar", "chocolate", "nata", "vainilla", "miel", "cacao", "cocoa", "mermelada", "sirope", "caramelo", "esencia"}
+SALADOS = {
+    "ajo", "cebolla", "tomate", "pimiento", "puerro", "pimienta", "vino", "caldo", "perejil", "laurel",
+    "oregano", "pimenton", "comino", "zanahoria", "patata",
+}
+VERDURAS = {
+    "zanahoria", "calabacin", "berenjena", "pimiento", "espinaca", "acelga", "coliflor", "brocoli", "alcachofa",
+    "judia", "esparrago", "puerro", "calabaza", "champinon", "seta", "col", "repollo", "lechuga", "pepino",
+    "nabo", "remolacha", "guisante", "haba", "lenteja", "garbanzo", "alubia", "tomate", "patata", "maiz",
+}
+PASTAS = {"pasta", "espagueti", "macarron", "fideo", "lasana", "tallarin", "canelon", "penne"}
+
+
+def tipo_por_ingredientes(nombres):
+    claves = {clave(n) for n in nombres}
+    if claves & PESCADOS:
+        return "pescado y marisco"
+    if claves & CARNES:
+        return "carne"
+    if claves & DULCES and not claves & SALADOS:
+        return "postre"
+    if "arroz" in claves:
+        return "arroz"
+    if claves & PASTAS:
+        return "pasta"
+    if len(claves & VERDURAS) >= 3:
+        return "verdura"
+    return None
+
+
+POSTRE_DEBIL = re.compile(r"pastel|tarta|tartaleta|crepa")
+SALADO = re.compile(
+    r"carne|pollo|pescado|atun|salmon|bacalao|merluza|marisco|gamba|verdura|patata|jamon|puerro|calabacin|"
+    r"espinaca|cerdo|champinon|berenjena|lomo|ternera|pavo|brocoli|cordero|chorizo|salchicha|bechamel|seta|hongo|"
+    r"salad[oa]|gratinad|arroz|cebolla|ajo"
+)
+
+
+def asignar_tipo(categoria, nombre, ingredientes=None):
     cat = clave(categoria or "")
     nom = clave(nombre or "")
     for tipo, re_cat, _ in TIPOS_COMPILADOS:
-        if cat and re_cat.search(cat):
+        if not cat:
+            break
+        if re_cat.search(cat) or (tipo == "postre" and POSTRE_DEBIL.search(cat)):
             return tipo
     for tipo, _, re_nom in TIPOS_COMPILADOS:
-        if nom and re_nom.search(nom):
+        if not nom:
+            break
+        if re_nom.search(nom):
             return tipo
+        if tipo == "postre" and POSTRE_DEBIL.search(nom) and not SALADO.search(nom):
+            return tipo
+    if ingredientes:
+        return tipo_por_ingredientes(ingredientes) or "otros"
     return "otros"
 
 
@@ -87,7 +144,7 @@ def texto_o_none(valor):
 
 def cargar_datos(args):
     if args.csv:
-        return pd.read_csv(args.csv, dtype=str, keep_default_na=False)
+        return pd.read_csv(args.csv, dtype=str, keep_default_na=False, encoding="utf-8-sig")
     try:
         from datasets import load_dataset
         conjunto = load_dataset("somosnlp/RecetasDeLaAbuela", args.subconjunto, split="train")
@@ -162,7 +219,7 @@ def procesar(df, args):
                 dudosas.append(linea)
             else:
                 buenas += 1
-        nombre = fila[c_nombre]
+        nombre = reparar_codificacion(fila[c_nombre])
         identificador = fila[c_id] if c_id else str(i + 1)
         if len(canonicos_por_receta[i]) < 2:
             descartadas.append((identificador, nombre, "menos de 2 ingredientes reconocidos", " | ".join(dudosas)))
@@ -192,17 +249,17 @@ def procesar(df, args):
         categoria = texto_o_none(fila[c_cat]) if c_cat else None
         recetas.append({
             "id": int(fila[c_id]) if c_id and str(fila[c_id]).isdigit() else i + 1,
-            "nombre": fila[c_nombre].strip(),
+            "nombre": reparar_codificacion(fila[c_nombre]).strip(),
             "categoria_original": categoria,
-            "tipo_plato": asignar_tipo(categoria, fila[c_nombre]),
+            "tipo_plato": asignar_tipo(categoria, fila[c_nombre], [n for n, _ in por_ingrediente.values()]),
             "momento": texto_o_none(fila[c_tiempo]) if c_tiempo else None,
             "pais": texto_o_none(fila[c_pais]) if c_pais else None,
             "duracion_min": a_minutos(fila[c_dur]) if c_dur else None,
             "comensales": a_entero(fila[c_com]) if c_com else None,
             "dificultad": texto_o_none(fila[c_dif]) if c_dif else None,
-            "instrucciones": str(fila[c_pasos]).replace("\r", "").strip(),
+            "instrucciones": reparar_codificacion(str(fila[c_pasos])).replace("\r", "").strip(),
             "url": texto_o_none(fila[c_url]) if c_url else None,
-            "ingredientes_originales": fila[c_ingr],
+            "ingredientes_originales": reparar_codificacion(fila[c_ingr]),
             "ingredientes": {k: (v[0], " | ".join(v[1])) for k, v in por_ingrediente.items()},
         })
 
