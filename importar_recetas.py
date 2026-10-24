@@ -165,6 +165,13 @@ def analizar_receta(ingredientes_texto):
     return resultados
 
 
+def cargar_aprobados(ruta):
+    if not ruta:
+        return None
+    tabla = pd.read_csv(ruta, dtype=str, keep_default_na=False, encoding="utf-8-sig")
+    return {clave(f["ingrediente"]) for _, f in tabla.iterrows() if clave(f.get("aprobado", "")) in ("si", "s", "1", "x")}
+
+
 def procesar(df, args):
     c_id = buscar_columna(df, "Id")
     c_nombre = buscar_columna(df, "Nombre")
@@ -200,6 +207,8 @@ def procesar(df, args):
         frecuencia_recetas.update(nombres)
 
     aceptadas, descartadas = [], []
+    aprobados = cargar_aprobados(args.aprobados)
+    bloqueos = Counter()
     lineas_total = lineas_ok = lineas_fallo = lineas_ignoradas = 0
     for i, (_, fila) in enumerate(df.iterrows()):
         analisis = parseadas[i]
@@ -227,6 +236,12 @@ def procesar(df, args):
         if validas and buenas / len(validas) < args.min_ratio:
             descartadas.append((identificador, nombre, "demasiadas lineas dudosas", " | ".join(dudosas)))
             continue
+        if aprobados is not None:
+            pendientes = sorted(n for n in canonicos_por_receta[i] if clave(n) not in aprobados and not es_basico(n))
+            if pendientes:
+                bloqueos.update(pendientes)
+                descartadas.append((identificador, nombre, "ingrediente no aprobado", " | ".join(pendientes)))
+                continue
         if len(str(fila[c_pasos]).strip()) < 40:
             descartadas.append((identificador, nombre, "pasos demasiado cortos", ""))
             continue
@@ -271,6 +286,7 @@ def procesar(df, args):
         "lineas_ok": lineas_ok,
         "lineas_fallo": lineas_fallo,
         "lineas_ignoradas": lineas_ignoradas,
+        "bloqueos": bloqueos,
     }
     return recetas, descartadas, estadisticas, frecuencia_recetas
 
@@ -288,10 +304,20 @@ def escribir_salidas(recetas, descartadas, estadisticas, frecuencia, args):
         for nombre, _ in r["ingredientes"].values():
             utiles[nombre] += 1
 
-    pd.DataFrame(
-        [(n, c, es_basico(n)) for n, c in utiles.most_common()],
-        columns=["ingrediente", "recetas", "es_basico"],
-    ).to_csv(salida / "ingredientes_frecuencia.csv", index=False, encoding="utf-8-sig")
+    aprobados = cargar_aprobados(args.aprobados)
+    filas_ing = []
+    for n, c in frecuencia.most_common():
+        if aprobados is not None:
+            aprobado = "si" if clave(n) in aprobados else ""
+        else:
+            aprobado = "si" if c >= args.auto_aprobar else ""
+        filas_ing.append((n, c, es_basico(n), aprobado))
+    pd.DataFrame(filas_ing, columns=["ingrediente", "recetas", "es_basico", "aprobado"]).to_csv(
+        salida / "ingredientes_frecuencia.csv", index=False, encoding="utf-8-sig"
+    )
+    pd.DataFrame(estadisticas["bloqueos"].most_common(), columns=["ingrediente", "recetas_bloqueadas"]).to_csv(
+        salida / "ingredientes_pendientes.csv", index=False, encoding="utf-8-sig"
+    )
 
     pd.DataFrame(descartadas, columns=["id", "nombre", "motivo", "lineas_dudosas"]).to_csv(
         salida / "recetas_descartadas.csv", index=False, encoding="utf-8-sig"
@@ -320,11 +346,12 @@ def escribir_salidas(recetas, descartadas, estadisticas, frecuencia, args):
         "Recetas en el dataset: %d" % estadisticas["recetas_totales"],
         "Recetas aceptadas: %d (%.1f %%)" % (estadisticas["recetas_aceptadas"], aceptacion),
         "Recetas descartadas: %d" % estadisticas["recetas_descartadas"],
+        *["  motivo: %-40s %d" % (m, n) for m, n in Counter(d[2] for d in descartadas).most_common()],
         "Lineas de ingredientes: %d (reconocidas %d, no reconocidas %d, ignoradas %d)" % (
             estadisticas["lineas_total"], estadisticas["lineas_ok"],
             estadisticas["lineas_fallo"], estadisticas["lineas_ignoradas"]),
         "Ingredientes distintos en recetas aceptadas: %d" % len(utiles),
-        "Parametros: min_frec=%d, min_ratio=%.2f" % (args.min_frec, args.min_ratio),
+        "Parametros: min_frec=%d, min_ratio=%.2f, ingredientes aprobados: %s" % (args.min_frec, args.min_ratio, args.aprobados or "no se usa"),
         "",
         "Recetas por tipo de plato:",
     ]
@@ -401,10 +428,13 @@ def main():
     parser.add_argument("--csv", help="ruta al CSV descargado; si se omite se intenta descargar con la libreria datasets")
     parser.add_argument("--subconjunto", default="version_1", help="subconjunto del dataset al descargar con datasets")
     parser.add_argument("--salida", default="salida", help="carpeta para informes y CSV de revision")
-    parser.add_argument("--min-frec", type=int, default=3, dest="min_frec",
+    parser.add_argument("--min-frec", type=int, default=5, dest="min_frec",
                         help="un ingrediente que aparece en menos recetas se considera dudoso")
-    parser.add_argument("--min-ratio", type=float, default=0.8, dest="min_ratio",
+    parser.add_argument("--min-ratio", type=float, default=1.0, dest="min_ratio",
                         help="proporcion minima de lineas fiables para aceptar una receta")
+    parser.add_argument("--aprobados", help="CSV revisado (ingredientes_frecuencia.csv con la columna aprobado); solo entran recetas cuyos ingredientes esten aprobados")
+    parser.add_argument("--auto-aprobar", type=int, default=30, dest="auto_aprobar",
+                        help="en la primera pasada se marcan como aprobados los ingredientes que aparecen en al menos tantas recetas")
     parser.add_argument("--semilla", type=int, default=42)
     parser.add_argument("--mysql", action="store_true", help="cargar el resultado en MySQL")
     parser.add_argument("--host", default="localhost")
