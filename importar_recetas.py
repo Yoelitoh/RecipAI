@@ -1,4 +1,5 @@
 import argparse
+import difflib
 import getpass
 import os
 import random
@@ -9,7 +10,10 @@ from pathlib import Path
 
 import pandas as pd
 
-from normalizacion import BASICOS, analizar_linea, canonico, clave, dividir_ingredientes, reparar_codificacion
+from normalizacion import (
+    BASICOS, IGNORAR_PALABRA, SINONIMOS, UNIDADES_FUERTES, UTENSILIOS, analizar_linea, canonico, clave,
+    dividir_ingredientes, reparar_codificacion,
+)
 
 CARPETA = Path(__file__).resolve().parent
 
@@ -291,6 +295,31 @@ def procesar(df, args):
     return recetas, descartadas, estadisticas, frecuencia_recetas
 
 
+def avisos_ingredientes(frecuencia):
+    ruido = UNIDADES_FUERTES | UTENSILIOS | IGNORAR_PALABRA
+    frecuentes = [clave(n) for n, c in frecuencia.items() if c >= 30]
+    avisos = {}
+    for nombre, usos in frecuencia.items():
+        k = clave(nombre)
+        notas = []
+        if len(k) < 3:
+            notas.append("muy corto")
+        if re.search(r"\d", k) or not re.fullmatch(r"[a-z ]+", k):
+            notas.append("caracteres raros")
+        if k in ruido:
+            notas.append("posible medida o nota")
+        if k in SINONIMOS and clave(SINONIMOS[k]) != k:
+            notas.append("americanismo o variante: usar " + SINONIMOS[k])
+        if re.search(r"(ado|ada|ados|adas|ido|ida|idos|idas)$", k) and " " not in k and k not in ("pescado", "helado", "rebozado"):
+            notas.append("posible participio")
+        if usos >= 3 and usos < 30:
+            cercano = difflib.get_close_matches(k, frecuentes, n=1, cutoff=0.86)
+            if cercano and cercano[0] != k:
+                notas.append("parecido a " + cercano[0])
+        avisos[nombre] = "; ".join(notas)
+    return avisos
+
+
 def es_basico(nombre):
     return clave(nombre) in BASICOS or clave(nombre).startswith("aceite")
 
@@ -306,13 +335,14 @@ def escribir_salidas(recetas, descartadas, estadisticas, frecuencia, args):
 
     aprobados = cargar_aprobados(args.aprobados)
     filas_ing = []
+    avisos = avisos_ingredientes(frecuencia)
     for n, c in frecuencia.most_common():
         if aprobados is not None:
             aprobado = "si" if clave(n) in aprobados else ""
         else:
             aprobado = "si" if c >= args.auto_aprobar else ""
-        filas_ing.append((n, c, es_basico(n), aprobado))
-    pd.DataFrame(filas_ing, columns=["ingrediente", "recetas", "es_basico", "aprobado"]).to_csv(
+        filas_ing.append((n, c, es_basico(n), aprobado, avisos.get(n, "")))
+    pd.DataFrame(filas_ing, columns=["ingrediente", "recetas", "es_basico", "aprobado", "aviso"]).to_csv(
         salida / "ingredientes_frecuencia.csv", index=False, encoding="utf-8-sig"
     )
     pd.DataFrame(estadisticas["bloqueos"].most_common(), columns=["ingrediente", "recetas_bloqueadas"]).to_csv(
@@ -433,7 +463,7 @@ def main():
     parser.add_argument("--min-ratio", type=float, default=1.0, dest="min_ratio",
                         help="proporcion minima de lineas fiables para aceptar una receta")
     parser.add_argument("--aprobados", help="CSV revisado (ingredientes_frecuencia.csv con la columna aprobado); solo entran recetas cuyos ingredientes esten aprobados")
-    parser.add_argument("--auto-aprobar", type=int, default=30, dest="auto_aprobar",
+    parser.add_argument("--auto-aprobar", type=int, default=15, dest="auto_aprobar",
                         help="en la primera pasada se marcan como aprobados los ingredientes que aparecen en al menos tantas recetas")
     parser.add_argument("--semilla", type=int, default=42)
     parser.add_argument("--mysql", action="store_true", help="cargar el resultado en MySQL")

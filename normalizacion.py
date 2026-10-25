@@ -35,13 +35,20 @@ UNIDADES = {
     "hebra", "hebras", "lamina", "laminas", "palo", "palos", "pastilla", "pastillas", "barrita",
     "barritas", "ramillete", "ramilletes", "sobrecito", "sobrecitos", "terron", "terrones",
     "medida", "medidas", "chorreon", "cta", "ctas", "copita", "copitas", "ramito", "ramitos", "und", "unds",
-    "cc", "cl", "dl", "ccs", "kgr", "kgrs", "cucharon", "cucharones", "brick", "bricks", "brik", "cubico", "cubicos", "bote", "botes", "docenas", "anillo", "anillos", "planta", "plantas", "ram", "bar",
+    "tacita", "tacitas", "grm", "grms", "grs", "lbs", "lb", "gms", "cuña", "cuñas", "cuenco", "cuencos", "dado", "dados",
+    "placa", "placas", "pocillo", "pocillos", "bolsita", "bolsitas", "latita", "latitas", "pedacito", "pedacitos",
+    "pote", "potes", "tarrina", "tarrinas", "rulo", "rulos", "racimo", "racimos", "manojito", "manojitos",
+    "atado", "atados", "caballito", "caballitos", "toque", "ras",
+    "plancha", "planchas", "perla", "perlas", "aro", "aros", "botellin", "botellines", "cubilete", "cubiletes",
+    "tza", "tzas", "lts", "lt", "lto", "ltrs", "bolita", "bolitas", "cc", "cl", "dl", "ccs", "kgr", "kgrs", "cucharon", "cucharones", "brick", "bricks", "brik", "cubico", "cubicos", "bote", "botes", "docenas", "anillo", "anillos", "planta", "plantas", "ram", "bar",
 }
 
 UNIDADES_DEBILES = {"filete", "filetes"}
 
-CUCHARAS = {"cuchara", "cucharas", "cchta", "cchtas", "cucharada", "cucharadas", "cucharadita", "cucharaditas", "cda", "cdas", "cdta", "cdtas"}
-CALIFICADORES_CUCHARA = {"postre", "cafe", "sopera", "soperas", "rasa", "colmada", "grande", "pequena"}
+CUCHARAS = {"cucharilla", "cucharillas", "cuchara", "cucharas", "cchta", "cchtas", "cucharada", "cucharadas", "cucharadita", "cucharaditas", "cda", "cdas", "cdta", "cdtas"}
+CALIFICADORES_CUCHARA = {
+    "postre", "cafe", "sopera", "soperas", "rasa", "rasas", "colmada", "colmadas", "grande", "grandes", "pequena", "pequenas",
+}
 
 RELLENO = {
     "aprox", "aproximadamente", "alrededor", "cerca", "unos", "unas", "un",
@@ -50,7 +57,8 @@ RELLENO = {
     "de", "del", "la", "el", "los", "las", "y", "o", "al", "poco", "poca",
     "pocas", "pocos", "algunas", "algunos", "varias", "varios", "como",
     "casi", "gusto", "necesaria", "necesario", "cantidad", "suficiente", "suficientes",
-    "abundante", "fino", "fina", "finos", "finas", "grande", "grandes", "mediano", "mediana", "medianos",
+    "abundante", "cualquier", "cualquiera", "otro", "otra", "otros", "otras", "alguno", "alguna",
+    "fino", "fina", "finos", "finas", "grande", "grandes", "mediano", "mediana", "medianos",
     "medianas", "pequeno", "pequena", "pequenos", "pequenas", "chico",
     "chica", "chicos", "chicas", "extra", "bien", "buen", "buena",
 }
@@ -79,25 +87,32 @@ CORTE = {
 
 PREFIJOS_DE = {
     "jugo", "zumo", "ralladura", "cascara", "pulpa", "yema", "yemas", "clara",
-    "claras", "corteza", "cortezas",
+    "claras", "corteza", "cortezas", "semilla", "semillas", "raiz", "raices", "cogollo", "cogollos", "bulbo",
+    "bulbos", "penca", "pencas", "corazon", "corazones", "piel",
 }
 
 IGNORAR_PALABRA = {
     "pero", "aunque", "nota", "notas", "opcional", "opcionales", "ver", "si", "gusto",
     "necesario", "necesaria", "cantidad", "persona", "personas", "racion", "raciones", "etc", "receta", "ponle",
+    "tipo", "ingrediente", "acompanamiento", "puede", "separado", "separados", "separada", "separadas", "desgranado",
+    "remojado", "despepitado", "deshuesada", "deshuesado", "preparado", "instantaneo", "soluble", "color", "amargo",
+    "picante", "blanco", "blanca", "rojo", "roja", "negro", "negra", "grande", "grandes", "pequeno", "pequena", "ligeramente",
 }
 
 SINGULARES_FIJOS = {"res", "anis", "cuscus", "mas", "gas", "tres", "pan", "hummus", "humus", "callos"}
 
 GENERICOS_OBLIGATORIOS = {
-    "caldo", "salsa", "crema", "fecula", "polvo", "mezcla", "condimento", "pecho", "aleta", "carre",
-    "paleta", "presa", "humo", "sirop", "jarabe", "sazonador", "esencia", "extracto", "aroma", "dulce",
-    "hueso", "alita", "ala", "higado", "higadito", "grasa", "miga", "copo", "orejon",
+    "caldo", "salsa", "crema", "fecula", "polvo", "mezcla", "condimento", "humo", "sirop", "jarabe",
+    "sazonador", "esencia", "extracto", "aroma", "dulce", "hueso", "alita", "ala", "higado", "higadito",
+    "grasa", "miga", "copo", "orejon", "relleno", "fondo", "sofrito", "masa", "aromatizante", "concentrado", "base", "pipa", "chip",
 }
-GENERICOS_OPCIONALES = {
+CORTES = {
     "lomo", "solomillo", "costilla", "muslo", "contramuslo", "pechuga", "chuleta", "falda", "nalga",
-    "cadera", "carrillera", "cuerito", "tortilla", "punta", "queso", "pasta",
+    "cadera", "carrillera", "cuerito", "presa", "paleta", "aleta", "carre", "pecho", "secreto", "pluma",
+    "entrecot", "rabo", "pata", "zancarron", "punta", "bistec", "bife", "matambre", "arrachera", "pierna",
+    "redondo", "bondiola", "espinazo", "costillar", "medallon",
 }
+GENERICOS_OPCIONALES = {"tortilla", "queso", "pasta", "seta"}
 
 ANIMALES = {
     "pollo", "gallina", "pavo", "pato", "oca", "codorniz", "perdiz", "ave", "ternera", "vaca", "buey", "res",
@@ -171,13 +186,16 @@ CORTE = _claves(CORTE)
 UTENSILIOS = _claves(UTENSILIOS)
 PREFIJOS_DE = _claves(PREFIJOS_DE)
 IGNORAR_PALABRA = _claves(IGNORAR_PALABRA)
-GENERICOS_OBLIGATORIOS = _claves(GENERICOS_OBLIGATORIOS)
+GENERICOS_OBLIGATORIOS = _claves(GENERICOS_OBLIGATORIOS) | _claves(CORTES)
+CORTES = _claves(CORTES)
 GENERICOS_OPCIONALES = _claves(GENERICOS_OPCIONALES)
 ANIMALES = _claves(ANIMALES)
 CORTE_EXCLUIDOS = _claves(CORTE_EXCLUIDOS)
 ACENTOS = {"orejon": "orejón", "higado": "hígado", "carre": "carré", "fecula": "fécula"}
 ARTICULOS = {"la", "el", "los", "las", "un", "una"}
-STOP_COMPLEMENTO = {"tipo", "estilo", "donde", "que", "se", "su", "al", "a", "si", "como", "cuando", "por", "lo", "le", "es", "ya"}
+STOP_COMPLEMENTO = {
+    "variado", "variada", "variados", "variadas", "surtido", "surtida", "surtidos", "surtidas",
+    "mixto", "mixta", "mixtos", "mixtas", "tipo", "estilo", "donde", "que", "se", "su", "al", "a", "si", "como", "cuando", "por", "lo", "le", "es", "ya"}
 
 MOJIBAKE = {
     "Ã¡": "á", "Ã©": "é", "Ã­": "í", "Ã³": "ó", "Ãº": "ú", "Ã±": "ñ", "Ã¼": "ü",
@@ -306,14 +324,24 @@ def cortar_preparacion(tokens):
 def quitar_prefijos(tokens):
     tokens = list(tokens)
     while len(tokens) >= 3 and _token_limpio(tokens[0]) in PREFIJOS_DE and _token_limpio(tokens[1]) in ("de", "del"):
+        siguiente = [t for t in tokens[2:] if _token_limpio(t) not in ARTICULOS and not RE_NUMERO.match(_token_limpio(t))]
+        if siguiente and _token_limpio(siguiente[0]) in ANIMALES:
+            break
         tokens = tokens[2:]
     return tokens
 
 
+def _sin_plural(texto):
+    return " ".join(
+        w[:-1] if w.endswith("s") and len(w) > 3 and not w.endswith("ss") else w for w in texto.split()
+    )
+
+
 def _compuesto(tokens):
-    frase = clave(" ".join(tokens))
+    frase = _sin_plural(clave(" ".join(tokens)))
     for compuesto_clave, compuesto in COMPUESTOS_CLAVE:
-        if frase == compuesto_clave or frase.startswith(compuesto_clave + " "):
+        ck = _sin_plural(compuesto_clave)
+        if frase == ck or frase.startswith(ck + " "):
             return compuesto
     return None
 
@@ -350,7 +378,12 @@ def _generico(tokens):
         return "%s de %s" % (_singular_simple(tokens[0].lower().strip(".,;:")), complemento)
     todos = GENERICOS_OBLIGATORIOS | GENERICOS_OPCIONALES
     base = cabeza
-    for candidato in (cabeza, cabeza[:-1], cabeza[:-2]):
+    candidatos = [cabeza]
+    if cabeza.endswith("s"):
+        candidatos.append(cabeza[:-1])
+    if cabeza.endswith("es"):
+        candidatos.append(cabeza[:-2])
+    for candidato in candidatos:
         if candidato in todos:
             base = candidato
             break
@@ -359,13 +392,33 @@ def _generico(tokens):
         return None
     nombre = tokens[0].lower().strip(".,;:") if base == cabeza else ACENTOS.get(base, base)
     resto = tokens[1:]
+    if complemento and clave(complemento) in ("coccion", "cocer", "cocinar", "cocido", "cocida"):
+        return "__fallo__"
     if complemento:
         return "%s de %s" % (nombre, complemento)
-    if (obligatorio or base == "queso") and resto and _token_limpio(resto[0]) not in ("de", "del"):
+    if ((obligatorio and base not in CORTES) or base in ("queso", "seta")) and resto and _token_limpio(resto[0]) not in ("de", "del"):
         palabra = _palabra_principal(resto[:1])
         if palabra and _token_limpio(resto[0]) not in CORTE | RELLENO | STOP_COMPLEMENTO:
             return "%s %s" % (nombre, palabra)
     return "__fallo__" if obligatorio else None
+
+
+def _hay_alternativa(tokens):
+    for k, token in enumerate(tokens):
+        if k == 0 or _token_limpio(token) not in ("o", "u"):
+            continue
+        despues = tokens[k + 1:]
+        if not despues or _token_limpio(despues[0]) in ("de", "del") or RE_NUMERO.match(_token_limpio(despues[0])):
+            return False
+        despues = quitar_prefijos(quitar_cantidad(despues))
+        palabra_despues = _palabra_principal(despues[:1])
+        palabra_antes = _palabra_principal(quitar_prefijos(tokens[:k]))
+        if not palabra_despues or not palabra_antes:
+            return False
+        if clave(palabra_antes) not in ANIMALES or clave(palabra_despues) not in ANIMALES:
+            return False
+        return canonico(palabra_antes) != canonico(palabra_despues)
+    return False
 
 
 def analizar_linea(linea):
@@ -374,6 +427,10 @@ def analizar_linea(linea):
         return "ignorar", []
     tokens = quitar_prefijos(quitar_cantidad(texto.split()))
     if not tokens:
+        return "fallo", []
+    if len(tokens) > 1 and _token_limpio(tokens[0]) == "de":
+        return "ignorar", []
+    if _hay_alternativa(tokens):
         return "fallo", []
     comp = _compuesto(tokens)
     if comp:
@@ -408,7 +465,7 @@ def analizar_linea(linea):
         palabra = comp or _palabra_principal(grupo)
         if palabra is None or len(palabra) < 3:
             return "fallo", []
-        if clave(palabra) in UTENSILIOS or clave(palabra) in IGNORAR_PALABRA or clave(palabra) in UNIDADES_FUERTES:
+        if clave(palabra) in UTENSILIOS or clave(palabra) in IGNORAR_PALABRA or clave(palabra) in UNIDADES_FUERTES or clave(palabra).endswith("mente"):
             return "ignorar", []
         palabras.append(palabra)
     if not palabras:
@@ -441,6 +498,10 @@ def singular(palabra, vocabulario=None):
 def canonico(palabra, vocabulario=None):
     if " " in palabra:
         nombre = palabra
+        if clave(nombre) not in SINONIMOS and " de " in nombre:
+            cabeza, _, resto = nombre.partition(" de ")
+            if clave(resto) in SINONIMOS:
+                nombre = cabeza + " de " + SINONIMOS[clave(resto)]
     else:
         nombre = singular(palabra, vocabulario)
     return SINONIMOS.get(clave(nombre), nombre)
